@@ -182,7 +182,7 @@ const reset_password = async (req, res) => {
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '1h' });
 
     // Generate the reset link
-    const resetLink = `http://localhost:5173/reset-password/${token}`; // Change to your frontend URL
+    const resetLink = `https://frontendpartarif.vercel.app/reset-password/${token}`; // Change to your frontend URL
 
     // Send email
     await transporter.sendMail({

@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.use(express.json());
 const allowedOrigins = [
   // process.env.FRONTEND_URL || "https://frontendarif.onrender.com",
-  "http://localhost:5173",
+  "https://frontendpartarif.vercel.app/",
 ];
 app.use(
   cors({
