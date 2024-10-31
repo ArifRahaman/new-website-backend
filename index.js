@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.use(express.json());
 const allowedOrigins = [
   // process.env.FRONTEND_URL || "https://frontendarif.onrender.com",
-  "https://frontendpartarif.vercel.app",
+  "https://frontendpartarif.onrender.com",
 ];
 app.use(
   cors({
@@ -260,7 +260,7 @@ app.post(
 
     const { email } = req.body;
     const filePath = req.file.path;
-    const imageUrl = `https://frontendpartarif.vercel.app/${filePath}`;
+    const imageUrl = `https://frontendpartarif.onrender.com/${filePath}`;
     // const imageUrl = `https://frontend-pdfchat-2.onrender.com/${filePath}`;
 
     try {
