@@ -20,7 +20,7 @@ const generateAuthTokenAndSetCookie = (user, res) => {
     httpOnly: true,
     secure: true, // Ensure HTTPS is used
     sameSite: 'None', // Required for cross-site cookies
-    domain: '.backend_pdf-chat.com', // Ensure this matches your domain
+    // domain: '.backend_pdf-chat.com', // Ensure this matches your domain
   });
   return token;
 };
