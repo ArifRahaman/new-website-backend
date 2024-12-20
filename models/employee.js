@@ -32,10 +32,10 @@ const EmployeeSchema = new mongoose.Schema({
   },
   images: [{ type: mongoose.Schema.Types.ObjectId, ref: "images" }], // Reference to multiple images
 
-  refreshToken: { type: String }, // New field for refresh token
+
   otp: String,
   otpExpiry: Date,
-  isOnline: { type: Boolean, default: false },  // Online status
+
   // lastActive: { type: Date, default: Date.now } // Timestamp of last activity
 });
 
