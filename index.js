@@ -43,7 +43,7 @@ app.use(
 
 mongoose
   .connect(
-    "mongodb+srv://arifrahaman2606:NTambC6dzWTscSn1@mernstack.emb8nvx.mongodb.net/PDF",
+    process.env.MONGO_URI,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
