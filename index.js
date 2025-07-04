@@ -29,7 +29,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve s
 app.use(cookieParser());
 app.use(express.json());
 const allowedOrigins = [
-"https://frontendarif.onrender.com", 
+"https://frontendpartarif.vercel.app/", 
 ];
 app.use(
   cors({
