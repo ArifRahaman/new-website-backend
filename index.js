@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const jwt = require('jsonwebtoken');
 const socketIo = require('socket.io');
-const WebSocket=require('ws');
+const WebSocket = require('ws');
 
 
 const multer = require("multer");
@@ -18,11 +18,10 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 const authController = require("./controllers/Users/user");
 const PostModel = require("./models/Post");
-const imageModel=require("./models/imageSchema")
 const authControllerPdf = require("./controllers/Pdf/Pdf");
 const app = express();
 const server = http.createServer(app);
-const JWT_SECRET="sdsadwfefefefefeffefadafafafaf";
+const JWT_SECRET = "sdsadwfefefefefeffefadafafafaf";
 
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve static files
@@ -31,7 +30,7 @@ app.use(cookieParser());
 app.use(express.json());
 const allowedOrigins = [
   // process.env.FRONTEND_URL || "https://frontendarif.onrender.com",
-  "https://frontendpartarif.onrender.com",
+  "http://localhost:5173",
 ];
 app.use(
   cors({
@@ -58,7 +57,7 @@ mongoose
 
 
 
-  
+
 app.use("/uploads", express.static("uploads"));
 // Models
 const EmployeeModel = require("./models/employee");
@@ -82,10 +81,9 @@ const upload = multer({ storage: storage });
 app.delete("/videos/:id/:email", async (req, res) => {
   try {
     // Find the video by ID in MongoDB
-    const email=req.params.email;
-    if(email!='arifrahaman26adada0ee6@gmail.com')
-    {
-      return  res.status(401).send({ message: "Unauthorized" });
+    const email = req.params.email;
+    if (email != 'arifrahaman26adada0ee6@gmail.com') {
+      return res.status(401).send({ message: "Unauthorized" });
     }
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ message: "Video not found" });
@@ -122,17 +120,17 @@ const fileStorage = multer.diskStorage({
 // Multer upload instance
 const fileUpload = multer({ storage: fileStorage });
 
-cloudinary.config({ 
-  cloud_name: process.env.CLOUD_NAME, 
-  api_key: process.env.API_KEY, 
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
   api_secret: process.env.API_SECRET
 });
 
 // MongoDB connection URI
 //mongodb+srv://arifrahaman2606:NTambC6dzWTscSn1@mernstack.emb8nvx.mongodb.net/PDF
 mongoose.connect(process.env.MONGO_URI, {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true,
+  //   useNewUrlParser: true,
+  //   useUnifiedTopology: true,
 });
 
 // Define a MongoDB schema for storing video URLs
@@ -163,7 +161,7 @@ const storageanother = new CloudinaryStorage({
 
 
 const uploads = multer({ storage: storages });
-const upload_profile_image=multer({storage:storageanother});
+const upload_profile_image = multer({ storage: storageanother });
 
 // Set up Express app
 
@@ -210,16 +208,16 @@ app.post('/upload_profile_image', upload_profile_image.single('profileImage'), a
   try {
     const profileImage = req.file.path; // Cloudinary file URL
     const employeeId = req.body.employeeId; // Get the employee ID from the request body
- 
+
     // Create a new image entry
-     const user=EmployeeModel.findById({_id: employeeId});
-     if(user){
+    const user = EmployeeModel.findById({ _id: employeeId });
+    if (user) {
       const result = await EmployeeModel.findOneAndUpdate(
         { _id: employeeId },
         { $set: { profileImage: req.file.path } },
         { new: true, upsert: true } // `new: true` returns the updated document, `upsert: true` creates if not found
       );
-     }
+    }
     const imageNew = new ImageModel({ profileImage, employeeId });
     await imageNew.save();
 
@@ -247,7 +245,7 @@ app.get('/videos', async (req, res) => {
 });
 
 
-app.post('/reset-password',authController.reset_password);
+app.post('/reset-password', authController.reset_password);
 
 
 
@@ -329,7 +327,7 @@ app.post("/posts/:postId/like", async (req, res) => {
   }
 });
 
-app.post("/reset-password/:token",authController.password_reset_link);
+app.post("/reset-password/:token", authController.password_reset_link);
 
 
 app.post("/posts/:postId/dislike", async (req, res) => {
@@ -457,7 +455,7 @@ app.post("/posts", upload.single("cover"), async (req, res) => {
 });
 
 
-app.get("/posts",authController.posts)
+app.get("/posts", authController.posts)
 app.post("/login", authController.login);
 app.post("/verify-otp", authController.verifyotp);
 
@@ -473,22 +471,52 @@ app.get("/posts/by-author/:authorId", async (req, res) => {
   }
 });
 
-app.put("/user/:id", async (req, res) => {
+app.put('/user/:id', async (req, res) => {
   try {
+    const updates = req.body;
+    // Only allow specific fields
+    const allowed = ['username', 'email', 'dob', 'universityname'];
+    Object.keys(updates).forEach(key => {
+      if (!allowed.includes(key)) delete updates[key];
+    });
     const updatedUser = await EmployeeModel.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      {
-        new: true,
-      }
-    );
+      updates,
+      { new: true, runValidators: true }
+    ).select('-password -__v');
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.json(updatedUser);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message });
+    }
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+app.get('/user/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Validate if the provided ID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
+    const user = await EmployeeModel.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
   }
 });
 app.post("/upload-pdf", upload.single("pdf"), authControllerPdf.uploadPdf);
-
+// );
 app.get("/user-pdfs/:userId", async (req, res) => {
   const { userId } = req.params;
 

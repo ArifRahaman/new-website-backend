@@ -31,50 +31,64 @@ const register = async (req, res) => {
   try {
     const { username, email, password, dob, universityname } = req.body;
 
-    // Validate required fields
-    if (!username || !email || !password || !dob || !universityname) {
-      return res
-        .status(400)
-        .json({ error: "Please provide all required fields." });
+    // Trim and sanitize input
+    const trimmedUsername = username?.trim();
+    const trimmedEmail = email?.trim().toLowerCase();
+    const trimmedUniversity = universityname?.trim();
+
+    // Basic field validation
+    if (!trimmedUsername || !trimmedEmail || !password || !dob || !trimmedUniversity) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields (username, email, password, dob, universityname) are required.",
+      });
     }
 
-    // Validate date format
+    // Date of birth validation
     const dateOfBirth = new Date(dob);
     if (isNaN(dateOfBirth.getTime())) {
-      return res
-        .status(400)
-        .json({ error: "Invalid date format for Date of Birth." });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format for Date of Birth.",
+      });
     }
 
-    // Check if the user already exists
-    const existingEmployee = await EmployeeModel.findOne({ email });
+    // Check for existing user
+    const existingEmployee = await EmployeeModel.findOne({ email: trimmedEmail });
     if (existingEmployee) {
-      return res.status(409).json({ error: "Email already registered." });
+      // Email conflict, do not expose further info
+      return res.status(409).json({
+        success: false,
+        message: "An account with this email already exists.",
+      });
     }
 
-    // Hash the password
+    // Hash password securely
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new employee
+    // Create new user
     const newEmployee = new EmployeeModel({
-      username: username.trim(),
-      email: email.trim(),
+      username: trimmedUsername,
+      email: trimmedEmail,
       password: hashedPassword,
       dob: dateOfBirth,
-      universityname: universityname.trim(),
+      universityname: trimmedUniversity,
     });
 
-    // Save the new employee to the database
-    const savedEmployee = await newEmployee.save();
+    await newEmployee.save();
 
-    // Send success response
+    // Respond with success (don't return password or internal fields)
     res.status(201).json({
-      message: "User is successfully signed up",
-      employee: savedEmployee,
+      success: true,
+      message: "User registered successfully.",
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+
+  } catch (err) {
+    console.error("Error during user registration:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again later.",
+    });
   }
 };
 
@@ -227,22 +241,32 @@ const password_reset_link=async (req, res) => {
     res.status(500).json({ error: 'Invalid or expired token' });
   }
 }
-const posts=async (req, res) => {
-    try {
-      const posts = await PostModel.find();
-      const fullUrl = req.protocol + "://" + req.get("host");
-      const postsWithFullUrl = posts.map((post) => {
-        if (post.cover) {
-          post.cover = `${fullUrl}/${post.cover}`;
-        }
-        return post;
-      });
-      res.status(200).send(postsWithFullUrl);
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      res.status(500).send({ error: "Internal server error" });
-    }
+const posts = async (req, res) => {
+  try {
+    const posts = await PostModel.find()
+      .populate("author", "username profileImage") // get profile image from Employee
+      .populate("comments.author", "username profileImage") // optional: for comment authors
+      .sort({ createdAt: -1 })
+      .lean(); // converts Mongoose docs to plain JS objects
+
+    const shaped = posts.map((post) => ({
+      ...post,
+      authorname: post.author?.username,
+      authorprofilepicture: post.author?.profileImage,
+      comments: post.comments.map((c) => ({
+        ...c,
+        authorname: c.author?.username,
+        authorprofilepicture: c.author?.profileImage,
+      })),
+    }));
+
+    res.json(shaped);
+  } catch (err) {
+    console.error("Error fetching posts:", err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
+};
+
 
 
 module.exports = {
