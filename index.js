@@ -532,16 +532,16 @@ app.get("/user-pdfs/:userId", async (req, res) => {
 app.get("/user-pdfs/:userId", authControllerPdf.getPdf);
 
 
-// app.delete("/posts/delete/:id", async (req, res) => {
-//   try {
-//     const deletesuccess = await PostModel.findByIdAndDelete(req.params.id);
-//     if (deletesuccess) {
-//       return res.json(success);
-//     }
-//   } catch (err) {
-//     console.log(err);
-//   }
-// });
+app.delete("/posts/delete/:id", async (req, res) => {
+  try {
+    const deletesuccess = await PostModel.findByIdAndDelete(req.params.id);
+    if (deletesuccess) {
+      return res.json(success);
+    }
+  } catch (err) {
+    console.log(err);
+  }
+});
 app.delete("/delete-pdf/:id", authControllerPdf.deletedPdf);
 // Edit PDF title
 app.put("/edit-pdf-title/:id", async (req, res) => {
